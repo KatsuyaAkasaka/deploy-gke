@@ -1,0 +1,50 @@
+version: 2
+references:
+  setup_env: &setup_env
+    name: Set Environment Variable
+    command: |
+      echo 'export GCP_PROJECT=${GCP_PROJECT}' >> $BASH_ENV
+      echo 'export GO111MODUELE="on"' >> $BASH_ENV
+      echo 'export IMAGE_PATH="asia.gcr.io/${GCP_PROJECT}/deploy-gke"' >> $BASH_ENV
+      source $BASH_ENV
+  install_dc: &install_dc
+    name: Install docker-compose
+    command: |
+      curl -L https://github.com/docker/compose/releases/download/1.25.0/docker-compose-`uname -s`-`uname -m` > ~/docker-compose
+      chmod +x ~/docker-compose
+      mv ~/docker-compose /usr/local/bin/docker-compose
+  auth_gcloud: &auth_gcloud
+    name: Authenticate gcloud
+    command: |
+      echo $CICD_SA > gcloud-service-key.json
+      gcloud auth activate-service-account --key-file gcloud-service-key.json
+      gcloud --quiet auth configure-docker
+      gcloud --quiet config set project ${GCP_PROJECT}
+      gcloud --quiet config set compute/zone asia-northeast1-a
+  build: &build
+    working_directory: ~/deploy-gke
+    name: docker-compose build
+    command: docker-compose build
+  push_image: &push_image
+    name: push_image
+    command: |
+      docker tag server ${IMAGE_PATH}:${CIRCLE_SHA1}
+      docker push ${IMAGE_PATH}:${CIRCLE_SHA1}
+jobs:
+  push_image:
+    working_directory: ~/deploy-gke
+    docker:
+      - image: google/cloud-sdk
+    steps:
+      - checkout
+      - setup_remote_docker
+      - run: *setup_env
+      - run: *install_dc
+      - run: *auth_gcloud
+      - run: *build
+      - run: *push_image
+workflows:
+  version: 2
+  build_and_push:
+    jobs:
+      - push_image
