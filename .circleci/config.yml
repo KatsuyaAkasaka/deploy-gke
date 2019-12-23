@@ -21,6 +21,7 @@ references:
       gcloud --quiet auth configure-docker
       gcloud --quiet config set project ${GCP_PROJECT}
       gcloud --quiet config set compute/zone asia-northeast1-a
+      gcloud --quiet container clusters get-credentials deploy-gke
   build: &build
     working_directory: ~/deploy-gke
     name: docker-compose build
@@ -30,6 +31,32 @@ references:
     command: |
       docker tag server ${IMAGE_PATH}:${CIRCLE_SHA1}
       docker push ${IMAGE_PATH}:${CIRCLE_SHA1}
+  apt-get_update: &apt-get_update
+    name: apt-get update
+    command: |
+      apt-get update
+      apt-get install -y wget
+  install_kubectl: &install_kubectl
+    name: install kubectl
+    command: |
+      curl -LO https://storage.googleapis.com/kubernetes-release/release/$(curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt)/bin/linux/amd64/kubectl
+      mv kubectl /usr/local/bin
+      chmod +x /usr/local/bin/kubectl
+      kubectl version
+  install_kustomize: &install_kustomize
+    name: install kustomize
+    command: |
+      wget https://github.com/kubernetes-sigs/kustomize/releases/download/kustomize%2Fv3.5.1/kustomize_v3.5.1_linux_amd64.tar.gz
+      tar xvzf kustomize_v3.5.1_linux_amd64.tar.gz
+      mv kustomize /usr/local/bin
+      chmod +x /usr/local/bin/kustomize
+      kustomize version
+  deploy: &deploy
+    working_directory: ~/deploy-gke
+    name: deploy gke
+    command: |
+      ./k8s/overlays/production/build.sh ${IMAGE_PATH}:${CIRCLE_SHA1}
+      kubectl apply -f ./k8s/manifest/production/output.yaml
 jobs:
   push_image:
     working_directory: ~/deploy-gke
@@ -43,8 +70,23 @@ jobs:
       - run: *auth_gcloud
       - run: *build
       - run: *push_image
+  deploy:
+    working_directory: ~/deploy-gke
+    docker:
+      - image: google/cloud-sdk
+    steps:
+      - checkout
+      - setup_remote_docker
+      - run: *apt-get_update
+      - run: *auth_gcloud
+      - run: *install_kubectl
+      - run: *install_kustomize
+      - run: *deploy
 workflows:
   version: 2
   build_and_push:
     jobs:
       - push_image
+      - deploy:
+          requires:
+            - push_image
