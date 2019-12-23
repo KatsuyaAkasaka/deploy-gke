@@ -1,0 +1,21 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: deploy-gke-deployment
+  labels:
+    app: server-deploy
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: server
+  template:
+    metadata:
+      labels:
+        app: server
+    spec:
+      containers:
+        - name: deploy-gke-server
+          image: app-name
+          ports:
+            - containerPort: 8080

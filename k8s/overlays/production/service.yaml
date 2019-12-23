@@ -1,0 +1,10 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: deploy-gke-service
+  labels:
+    app: server-svc
+spec:
+  selector:
+    app: server
+    env: prd

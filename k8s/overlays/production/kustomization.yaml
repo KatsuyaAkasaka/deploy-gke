@@ -1,0 +1,13 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+commonLabels:
+  env: prd
+resources:
+- ../../base
+patchesStrategicMerge:
+- deployment.yaml
+- service.yaml
+images:
+- name: app-name
+  newName: asia.gcr.io/deploy-gke/deploy-gke
+  newTag: master
