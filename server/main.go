@@ -7,7 +7,7 @@ import (
 
 func handler(w http.ResponseWriter, r *http.Request) {
 	name := r.URL.Query().Get("name")
-	fmt.Fprintf(w, "hello, %s\n", name)
+	fmt.Fprintf(w, "helloaa, %s\n", name)
 }
 
 func main() {
