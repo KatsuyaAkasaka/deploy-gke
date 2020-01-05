@@ -21,7 +21,7 @@ references:
       gcloud --quiet auth configure-docker
       gcloud --quiet config set project ${GCP_PROJECT}
       gcloud --quiet config set compute/zone us-west1-a
-      gcloud --quiet container clusters get-credentials deploy-gke
+      gcloud --quiet container clusters get-credentials my-gke-cluster --zone us-west1-a
   build: &build
     working_directory: ~/deploy-gke
     name: docker-compose build
