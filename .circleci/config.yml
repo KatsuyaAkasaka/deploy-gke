@@ -5,12 +5,12 @@ references:
     command: |
       echo 'export GCP_PROJECT=${GCP_PROJECT}' >> $BASH_ENV
       echo 'export GO111MODUELE="on"' >> $BASH_ENV
-      echo 'export IMAGE_PATH="asia.gcr.io/${GCP_PROJECT}/deploy-gke"' >> $BASH_ENV
+      echo 'export IMAGE_PATH="gcr.io/${GCP_PROJECT}/deploy-gke"' >> $BASH_ENV
       source $BASH_ENV
   install_dc: &install_dc
     name: Install docker-compose
     command: |
-      curl -L https://github.com/docker/compose/releases/download/1.25.0/docker-compose-`uname -s`-`uname -m` > ~/docker-compose
+      curl -L https://github.com/docker/compose/releases/download/1.25.5/docker-compose-`uname -s`-`uname -m` > ~/docker-compose
       chmod +x ~/docker-compose
       mv ~/docker-compose /usr/local/bin/docker-compose
   auth_gcloud: &auth_gcloud
@@ -20,8 +20,8 @@ references:
       gcloud auth activate-service-account --key-file gcloud-service-key.json
       gcloud --quiet auth configure-docker
       gcloud --quiet config set project ${GCP_PROJECT}
-      gcloud --quiet config set compute/zone asia-northeast1-a
-      gcloud --quiet container clusters get-credentials deploy-gke
+      gcloud --quiet config set compute/zone us-west1-a
+      gcloud --quiet container clusters get-credentials my-gke-cluster --zone us-west1-a
   build: &build
     working_directory: ~/deploy-gke
     name: docker-compose build
